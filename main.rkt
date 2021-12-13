@@ -1,50 +1,38 @@
 #lang racket/base
 
-(module+ test
-  (require rackunit))
+(provide run-demo)
 
-;; Notice
-;; To install (from within the package directory):
-;;   $ raco pkg install
-;; To install (once uploaded to pkgs.racket-lang.org):
-;;   $ raco pkg install <<name>>
-;; To uninstall:
-;;   $ raco pkg remove <<name>>
-;; To view documentation:
-;;   $ raco docs <<name>>
-;;
-;; For your convenience, we have included LICENSE-MIT and LICENSE-APACHE files.
-;; If you would prefer to use a different license, replace those files with the
-;; desired license.
-;;
-;; Some users like to add a `private/` directory, place auxiliary files there,
-;; and require them in `main.rkt`.
-;;
-;; See the current version of the racket style guide here:
-;; http://docs.racket-lang.org/style/index.html
+(require racket/path racket/system)
 
-;; Code here
+(define (run-demo name dir filename)
+  (define session-name (or name (path->string (file-name-from-path filename))))
+  (define session-dir (or dir (path->string (expand-user-path "~"))))
+  (define tmux (find-executable-path "tmux"))
+  (system*/exit-code
+    tmux
+    "new-session" "-s" session-name "-c" session-dir
+    ";"
+    "split-window" "-h" "view" "+nnoremap r :.Twrite {left} <bar> +<CR>" "+xnoremap r :Twrite {left} <bar> '>+<CR>" "+set nospell" "+0"
+    filename))
 
+(module reader syntax/module-reader
+  -ignored-
+  #:wrapper2 (λ (in rd stx?)
+               (define parsed (rd in))
+               (define module
+                 (syntax-parse (datum->syntax #f parsed)
+                   #:datum-literals (module #%module-begin)
+                   [(module _ _
+                      (#%module-begin
+                       {~optional {~seq #:name name:string} #:defaults ([name #'#f])}
+                       {~optional {~seq #:dir dir:string} #:defaults ([dir #'#f])}
+                       _:expr ...))
+                    #:with filename (path->string (object-name in))
+                    #'(module demo racket/base
+                        (require tmux-vim-demo)
+                        (exit (run-demo name dir filename)))]))
+               (if stx?
+                 (strip-context module)
+                 (syntax->datum module)))
 
-
-(module+ test
-  ;; Any code in this `test` submodule runs when this file is run using DrRacket
-  ;; or with `raco test`. The code here does not run when this file is
-  ;; required by another module.
-
-  (check-equal? (+ 2 2) 4))
-
-(module+ main
-  ;; (Optional) main submodule. Put code here if you need it to be executed when
-  ;; this file is run using DrRacket or the `racket` executable.  The code here
-  ;; does not run when this file is required by another module. Documentation:
-  ;; http://docs.racket-lang.org/guide/Module_Syntax.html#%28part._main-and-test%29
-
-  (require racket/cmdline)
-  (define who (box "world"))
-  (command-line
-    #:program "my-program"
-    #:once-each
-    [("-n" "--name") name "Who to say hello to" (set-box! who name)]
-    #:args ()
-    (printf "hello ~a~n" (unbox who))))
+  (require syntax/parse syntax/strip-context))
