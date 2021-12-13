@@ -20,6 +20,9 @@ keybindings: Normal-mode @tt{r} sends the line under the cursor to the shell and
 moves down a line. Visual-mode @tt{r} does the same for the visually-selected
 lines.
 
+This requires @hyperlink["https://github.com/tpope/vim-tbone"]{tpope/vim-tbone}
+to be installed in Vim, or at least a compatible definition of @tt{:Twrite}.
+
 @BNF[(list @nonterm{demo}
            @BNF-seq-lines[
             (list @optional{@nonterm{name}})
