@@ -8,12 +8,16 @@
   (define session-name (or name (path->string (file-name-from-path filename))))
   (define session-dir (or dir (path->string (expand-user-path "~"))))
   (define tmux (find-executable-path "tmux"))
-  (system*/exit-code
-    tmux
-    "new-session" "-s" session-name "-c" session-dir
-    ";"
-    "split-window" "-h" "view" "+nnoremap r :.Twrite {left} <bar> +<CR>" "+xnoremap r :Twrite {left} <bar> '>+<CR>" "+set nospell" "+0"
-    filename))
+  (if tmux
+    (system*/exit-code
+      tmux
+      "new-session" "-s" session-name "-c" session-dir
+      ";"
+      "split-window" "-h" "view" "+nnoremap r :.Twrite {left} <bar> +<CR>" "+xnoremap r :Twrite {left} <bar> '>+<CR>" "+set nospell" "+0"
+      filename)
+    (begin0
+      127 ;; not found
+      (eprintf "tmux not found\n"))))
 
 (module reader syntax/module-reader
   -ignored-
