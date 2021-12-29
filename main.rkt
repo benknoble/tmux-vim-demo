@@ -1,6 +1,9 @@
 #lang racket/base
 
-(provide run-demo)
+(provide run-demo
+         run
+         run-racket-demo
+         run-racket)
 
 (require racket/path racket/system)
 
@@ -22,6 +25,15 @@
     (begin0
       127 ;; not found
       (eprintf "tmux not found\n"))))
+
+(define (run name dir filename pre-commands)
+  (run name dir filename pre-commands #f))
+
+(define (run-racket-demo name dir filename)
+  (run name dir filename "racket" #t))
+
+(define (run-racket name dir filename)
+  (run name dir filename "racket" #f))
 
 (module reader syntax/module-reader
   -ignored-

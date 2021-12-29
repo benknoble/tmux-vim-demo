@@ -70,3 +70,14 @@ the returned status-code.
     If @racket[demo?], run @tt{view} (Vim in readonly mode). Otherwise, run
     @tt{vim}.
 }
+
+@defproc[(run [name (or/c #f string?)] [dir (or/c #f string?)] [filename string?] [pre-commands (or/c #f string?)])
+         byte?]{Same as @racket[run-demo] with @racket[demo?] being @racket[#f].}
+
+@defproc[(run-racket-demo [name (or/c #f string?)] [dir (or/c #f string?)] [filename string?])
+         byte?]{Same as @racket[run-demo] with @racket[demo?] being @racket[#t]
+                and @racket[pre-commands] being @racket["racket"].}
+
+@defproc[(run-racket [name (or/c #f string?)] [dir (or/c #f string?)] [filename string?])
+         byte?]{Same as @racket[run-demo] with @racket[demo?] being @racket[#f]
+                and @racket[pre-commands] being @racket["racket"].}
