@@ -13,7 +13,11 @@
            tmux
            `("new-session" "-s" ,session-name "-c" ,session-dir ,@(if pre-commands (list pre-commands) null)
              ";"
-             "split-window" "-h" "view" "+nnoremap r :.Twrite {left} <bar> +<CR>" "+xnoremap r :Twrite {left} <bar> '>+<CR>" "+set nospell" "+0"
+             "split-window" "-h" "view"
+             "+nnoremap <silent> r :silent .Twrite {left} <bar> +<CR>"
+             "+xnoremap <silent> r :<C-u>silent '<,'>Twrite {left} <bar> '>+<CR>"
+             "+set nospell"
+             "+0"
              ,filename))
     (begin0
       127 ;; not found
