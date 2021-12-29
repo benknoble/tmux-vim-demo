@@ -28,8 +28,10 @@ If the @racket[#:demo?] directive is given it controls whether Vim will be in
 readonly mode. The value @racket[#t] (the default) means readonly mode while
 @racket[#f] means read-write mode.
 
-This requires @hyperlink["https://github.com/tpope/vim-tbone"]{tpope/vim-tbone}
+Keybindings require @hyperlink["https://github.com/tpope/vim-tbone"]{tpope/vim-tbone}
 to be installed in Vim, or at least a compatible definition of @tt{:Twrite}.
+Technically the programs produced by this language will run without it; however,
+the @tt{r} keybindings will produce errors.
 
 @BNF[(list @nonterm{demo}
            @BNF-seq-lines[
