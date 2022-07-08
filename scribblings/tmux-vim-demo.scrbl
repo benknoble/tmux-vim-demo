@@ -12,11 +12,7 @@ This language provides a convenient way to run a demo.
 The demo is formed from a running shell and a script. The script is simply a
 record of commands you may or may not want to send to the shell, so it has some
 things in common with an actor's script of lines as well as with a programmer's
-program script. @margin-note{Implementation detail: The script is parsed by the
-racket reader. The result is mostly ignored, but text which causes the racket
-reader to error (such as imbalanced parentheses) may cause this language's
-reader to bail. My best advice for such issues is currently to use the @tt{#;}
-and @tt{#| |#} commenting forms.}
+program script.
 
 Running a program in this language will spawn a new tmux session with a shell on
 the left and Vim (in readonly mode by default) on the right. Vim will have two

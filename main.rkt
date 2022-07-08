@@ -35,26 +35,73 @@
 (define (run-racket name dir filename)
   (run name dir filename "racket" #f))
 
-(module reader syntax/module-reader
-  -ignored-
-  #:wrapper2 (λ (in rd stx?)
-               (define parsed (rd in))
-               (define module
-                 (syntax-parse (datum->syntax #f parsed)
-                   #:datum-literals (module #%module-begin)
-                   [(module _ _
-                      (#%module-begin
-                       {~optional {~seq #:name name:string} #:defaults ([name #'#f])}
-                       {~optional {~seq #:dir dir:string} #:defaults ([dir #'#f])}
-                       {~optional {~seq #:pre commands:string} #:defaults ([commands #'#f])}
-                       {~optional {~seq #:demo? demo?:boolean} #:defaults ([demo? #'#t])}
-                       _:expr ...))
-                    #:with filename (path->string (object-name in))
-                    #'(module demo racket/base
-                        (require tmux-vim-demo)
-                        (exit (run-demo name dir filename commands demo?)))]))
-               (if stx?
-                 (strip-context module)
-                 (syntax->datum module)))
+(module reader racket/base
+  (provide (rename-out [read-tmux-syntax read-syntax]))
+  (require syntax/strip-context
+           racket/port)
 
-  (require syntax/parse syntax/strip-context))
+  (define (read-tmux-syntax src in)
+    (define filename (path->string (object-name in)))
+    (define (read-next-datum)
+      (with-handlers ([exn:fail:read? values])
+        (read-syntax src in)))
+    (define-values (name dir commands demo?)
+      ;; defaults
+      ;; N.B. demo? is null? to distinguish between set to a boolean (like #f)
+      ;; and unset (null?). The default is therefore (null? demo?) === #t.
+      (let loop ([name #f]
+                 [dir #f]
+                 [commands #f]
+                 [demo? null])
+        (with-handlers ([exn:fail:read?
+                          (λ (e)
+                            (values name dir commands demo?))])
+          (define datum (read-syntax src in))
+          (cond
+            [(and (syntax? datum)
+                  (keyword? (syntax-e datum)))
+             (case (syntax-e datum)
+               [(#:name)
+                (define maybe-name (read-next-datum))
+                (if (and (not name)
+                         (syntax? maybe-name)
+                         (string? (syntax-e maybe-name)))
+                  (loop (syntax-e maybe-name) dir commands demo?)
+                  (values name dir commands demo?))]
+               [(#:dir)
+                (define maybe-dir (read-next-datum))
+                (if (and (not dir)
+                         (syntax? maybe-dir)
+                         (string? (syntax-e maybe-dir)))
+                  (loop name (syntax-e maybe-dir) commands demo?)
+                  (values name dir commands demo?))]
+               [(#:pre)
+                (define maybe-commands (read-next-datum))
+                (if (and (not commands)
+                         (syntax? maybe-commands)
+                         (string? (syntax-e maybe-commands)))
+                  (loop name dir (syntax-e maybe-commands) demo?)
+                  (values name dir commands demo?))]
+               [(#:demo?)
+                (define maybe-demo? (read-next-datum))
+                (if (and (null? demo?)
+                         (syntax? maybe-demo?)
+                         (boolean? (syntax-e maybe-demo?)))
+                  (loop name dir commands (syntax-e maybe-demo?))
+                  (values name dir commands demo?))]
+               [else (values name dir commands demo?)])]
+            [else (values name dir commands demo?)]))))
+    ;; Throw away the rest of the content to avoid spurious forms after the
+    ;; module. This means that the `#lang` form consumed the whole file and
+    ;; didn't leave leftovers for racket's `read-syntax` to use, which manifest
+    ;; as extra forms after the module this is intended to return. The extra
+    ;; stuff could be used by `racket -f`, but `racket` errors.
+    (port->string in)
+    (strip-context
+      #`(module demo racket/base
+          (require tmux-vim-demo)
+          (exit (run-demo #,name
+                          #,dir
+                          #,filename
+                          #,commands
+                          #,(or (null? demo?) demo?)))))))
