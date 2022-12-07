@@ -6,3 +6,4 @@
 (define pkg-desc "#lang for demos with tmux and vim")
 (define version "0.2")
 (define pkg-authors '(benknoble))
+(define license 'MIT)
