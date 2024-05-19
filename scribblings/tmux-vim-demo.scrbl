@@ -49,7 +49,7 @@ the @tt{r} keybindings will produce errors.
      (list @nonterm{demo}
            @BNF-seq[@litchar{#:demo?} @elem{readonly mode? (boolean)}])]
 
-@defmodule[tmux-vim-demo]
+The module @racketmodname[tmux-vim-demo] also provides library bindings.
 
 The language expands into a call to @racket[run-demo] and @racket[exit]s with
 the returned status-code.
